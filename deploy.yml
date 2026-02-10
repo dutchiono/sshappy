@@ -51,28 +51,16 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
-            # Create app directory if it doesn't exist
-            mkdir -p /var/www/sshappy
-            cd /var/www/sshappy
-            
-            # Pull latest code
-            if [ -d ".git" ]; then
+            set -e
+            APP_DIR="/var/www/sshappy"
+            REPO_URL="https://github.com/dutchiono/sshappy.git"
+            if [ -d "$APP_DIR/.git" ]; then
+              cd $APP_DIR
               git pull origin main
             else
-              git clone https://github.com/dutchiono/sshappy.git .
+              git clone $REPO_URL $APP_DIR
             fi
-            
-            # Create builds directory for APK storage
-            mkdir -p builds
-            
-            # Set proper permissions
-            chown -R www-data:www-data /var/www/sshappy
-            chmod -R 755 /var/www/sshappy
-            
-            # Reload nginx if config changed
-            nginx -t && systemctl reload nginx || true
-            
-            echo "✅ Deployment complete! Website live at your configured domain"
+            echo "Static site deployed to $APP_DIR"
 
       - name: Notify deployment status
         if: always()
