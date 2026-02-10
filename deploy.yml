@@ -2,46 +2,22 @@ name: Deploy to Server
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v1.0.0
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
+          host: 100.77.11.127
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            set -e
-
-            APP_DIR="/var/www/sshappy"
-            REPO_URL="https://github.com/dutchiono/sshappy.git"
-
-            echo "Starting deployment..."
-
-            if [ -d "$APP_DIR/.git" ]; then
-              echo "Pulling latest changes..."
-              cd $APP_DIR
-              git pull origin main
-            else
-              echo "Initial clone..."
-              git clone $REPO_URL $APP_DIR
-              cd $APP_DIR
-            fi
-
-            echo "Installing dependencies..."
-            npm install
-
-            echo "Restarting service..."
-            sudo systemctl restart sshappy.service
-
-            echo "Deployment complete at $(date)"
+            cd /root/sshappy
+            git pull origin main
+            npm install --legacy-peer-deps
+            pm2 restart sshappy || pm2 start npm --name sshappy -- start
