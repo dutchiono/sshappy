@@ -115,25 +115,12 @@
             color: white;
             text-decoration: none;
             font-weight: 600;
-            border-bottom: 2px solid white;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            transition: border-color 0.2s;
         }
         
         .github-link:hover {
-            opacity: 0.8;
-        }
-        
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2.5em;
-            }
-            
-            .tagline {
-                font-size: 1.2em;
-            }
-            
-            .features {
-                grid-template-columns: 1fr;
-            }
+            border-color: white;
         }
     </style>
 </head>
@@ -141,16 +128,18 @@
     <div class="container">
         <header>
             <h1>🔐 SSHappy</h1>
-            <p class="tagline">Manage your Tailscale servers from your phone</p>
-            <span class="status-badge">✓ Production Ready</span>
+            <p class="tagline">Server Management Made Simple</p>
+            <span class="status-badge">✨ Now Available</span>
         </header>
 
         <div class="download-section">
             <h2 style="text-align: center; margin-bottom: 30px; color: #667eea;">Download SSHappy</h2>
             <div style="text-align: center;">
-                <a href="/builds/latest.apk" class="download-btn">📱 Download APK (Android)</a>
+                <a href="https://raw.githubusercontent.com/dutchiono/sshappy/main/releases/sshappy.apk" class="download-btn" download>
+                    📱 Download for Android (APK)
+                </a>
                 <p style="margin-top: 20px; color: #666;">
-                    Latest build: <span id="build-date">Building...</span>
+                    <small>Latest build from GitHub Actions</small>
                 </p>
             </div>
         </div>
@@ -158,71 +147,41 @@
         <div class="features">
             <div class="feature">
                 <h3>🚀 Quick Actions</h3>
-                <p>Execute common server tasks with a single tap. Restart services, check logs, monitor resources - all from your phone.</p>
+                <p>Execute common server tasks with a single tap. Restart services, check logs, monitor resources - all from your mobile device.</p>
             </div>
-            
+
             <div class="feature">
-                <h3>🔒 Secure by Design</h3>
-                <p>All credentials stored in device secure storage. SSH keys and passwords never leave your phone. Full support for key-based authentication.</p>
+                <h3>🔒 Secure SSH</h3>
+                <p>Industry-standard SSH encryption keeps your server connections secure. Support for password and key-based authentication.</p>
             </div>
-            
+
             <div class="feature">
                 <h3>📊 Real-time Monitoring</h3>
-                <p>Track CPU, memory, and disk usage in real-time. Set up health checks and get instant notifications when something goes wrong.</p>
+                <p>Keep an eye on your server's health with real-time CPU, memory, and disk usage monitoring. Get alerts when things go wrong.</p>
             </div>
-            
+
             <div class="feature">
-                <h3>🌐 Tailscale Native</h3>
-                <p>Built specifically for Tailscale networks. Connect to your servers using Tailscale IPs without exposing SSH to the internet.</p>
+                <h3>💾 Multiple Servers</h3>
+                <p>Manage all your servers from one app. Organize them by environment, project, or any way that works for you.</p>
             </div>
-            
-            <div class="feature">
-                <h3>⚡ SFTP Support</h3>
-                <p>Upload and download files securely. Manage configs, logs, and backups directly from your mobile device.</p>
-            </div>
-            
+
             <div class="feature">
                 <h3>🎯 Custom Commands</h3>
-                <p>Create your own quick action templates. Save frequently-used commands and execute them with one tap.</p>
+                <p>Save your frequently used commands and execute them with one tap. Build your personal toolkit of server management actions.</p>
             </div>
-        </div>
 
-        <div class="download-section">
-            <h2 style="text-align: center; margin-bottom: 20px; color: #667eea;">Getting Started</h2>
-            <ol style="line-height: 2; padding-left: 20px; color: #666;">
-                <li>Download and install the APK on your Android device</li>
-                <li>Open SSHappy and tap "Add Server"</li>
-                <li>Enter your Tailscale server details (IP, username, password/key)</li>
-                <li>Start managing your servers from anywhere!</li>
-            </ol>
-            <p style="margin-top: 30px; text-align: center; color: #666;">
-                Need help? Check out the <a href="https://github.com/dutchiono/sshappy" style="color: #667eea; font-weight: 600;">documentation on GitHub</a>
-            </p>
+            <div class="feature">
+                <h3>🌙 Beautiful UI</h3>
+                <p>Modern, intuitive interface designed for mobile. Dark mode support for comfortable late-night server management.</p>
+            </div>
         </div>
 
         <footer>
-            <p>Built with React Native & Expo</p>
+            <p>Built with ❤️ using React Native and Expo</p>
             <p style="margin-top: 10px;">
                 <a href="https://github.com/dutchiono/sshappy" class="github-link">View on GitHub</a>
             </p>
         </footer>
     </div>
-
-    <script>
-        // Update build date from latest APK
-        fetch('/builds/latest.apk', {method: 'HEAD'})
-            .then(response => {
-                const lastModified = response.headers.get('Last-Modified');
-                if (lastModified) {
-                    const date = new Date(lastModified);
-                    document.getElementById('build-date').textContent = date.toLocaleString();
-                } else {
-                    document.getElementById('build-date').textContent = 'Check GitHub Actions';
-                }
-            })
-            .catch(() => {
-                document.getElementById('build-date').textContent = 'Check GitHub Actions';
-            });
-    </script>
 </body>
 </html>
