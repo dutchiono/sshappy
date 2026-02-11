@@ -4,6 +4,10 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   deploy-and-build:
     name: Deploy Site + Build APK on Server
@@ -11,6 +15,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
 
       - name: Deploy site and build APK on server
         id: server-build
@@ -21,11 +28,10 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           command_timeout: 30m
           script: |
-            set -e
-
+            export HOME=/home/sshappy
             export ANDROID_HOME=/opt/android-sdk
-            export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$PATH
             export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+            export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0:$JAVA_HOME/bin
 
             APP_DIR="/var/www/sshappy"
             REPO_URL="https://github.com/iono-such-things/sshappy.git"
@@ -43,16 +49,18 @@ jobs:
             git reset --hard origin/main
 
             echo "=== Installing dependencies ==="
-            npm install --legacy-peer-deps 2>&1
+            npm install --legacy-peer-deps
 
             echo "=== Running expo prebuild ==="
-            npx expo prebuild --platform android --no-install --clean 2>&1
+            npx expo prebuild --platform android --no-install --clean
 
             echo "=== Building APK with Gradle ==="
             cd android
             chmod +x gradlew
+            set +e
             ./gradlew assembleRelease 2>&1 | tee /tmp/sshappy-build.log
             BUILD_EXIT=${PIPESTATUS[0]}
+            set -e
 
             if [ $BUILD_EXIT -eq 0 ]; then
               echo "BUILD_SUCCESS"
@@ -66,14 +74,15 @@ jobs:
 
       - name: Download APK from server
         if: success()
-        uses: nicklasfrahm/scp-action@main
-        with:
-          direction: download
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          source: /var/www/sshappy/builds/sshappy-latest.apk
-          target: sshappy-latest.apk
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          sshpass -p "$SERVER_PASSWORD" scp -o StrictHostKeyChecking=no \
+            "${SERVER_USER}@${SERVER_HOST}:/var/www/sshappy/builds/sshappy-latest.apk" \
+            ./sshappy-latest.apk
+          ls -la sshappy-latest.apk
 
       - name: Create GitHub Release
         if: success()
@@ -92,14 +101,14 @@ jobs:
 
       - name: Download build log from server (on failure)
         if: failure()
-        uses: nicklasfrahm/scp-action@main
-        with:
-          direction: download
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          source: /tmp/sshappy-build.log
-          target: sshappy-build.log
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PASSWORD: ${{ secrets.SERVER_PASSWORD }}
+        run: |
+          sshpass -p "$SERVER_PASSWORD" scp -o StrictHostKeyChecking=no \
+            "${SERVER_USER}@${SERVER_HOST}:/tmp/sshappy-build.log" \
+            ./sshappy-build.log 2>/dev/null || echo "No build log available" > ./sshappy-build.log
 
       - name: Create GitHub Issue on build failure
         if: failure()
@@ -110,7 +119,6 @@ jobs:
             let buildLog = 'No build log available';
             try {
               buildLog = fs.readFileSync('sshappy-build.log', 'utf8');
-              // Truncate if too long for an issue
               if (buildLog.length > 60000) {
                 buildLog = '...(truncated)...\n' + buildLog.slice(-60000);
               }
